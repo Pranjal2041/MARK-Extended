@@ -10,8 +10,9 @@ from utils import FeatureExtractor as fe
 
 class CIFARDataset(Dataset):
 
-    def __init__(self, file = 'datasets/cifar100_train.h5', isTrain = True):
+    def __init__(self, file = 'datasets/cifar100_train.h5', isTrain = True, num_tasks = 20):
         super(CIFARDataset, self).__init__()
+        self.num_tasks = num_tasks
         self.data = h5py.File(file, 'r')
         self.set_task(0)
         self.isTrain = isTrain
@@ -39,12 +40,18 @@ class CIFARDataset(Dataset):
         return self.transformation(img), self.Y[idx], self.transformation_feats(img)
 
 
-def get_cifar100_dataloader(fol = 'datasets', isTrain = True, isValid = False, batch_size = 16, num_workers = 4):
-    dataset = CIFARDataset(os.path.join(fol, f'cifar100_{"train" if isTrain else "val" if isValid else "test"}.h5'), isTrain)
+def get_cifar100_dataloader(fol = 'datasets', isTrain = True, isValid = False, batch_size = 16, num_workers = 4, num_tasks = 20):
+    dataset = CIFARDataset(os.path.join(fol, f'cifar100_{"train" if isTrain else "val" if isValid else "test"}.h5'), isTrain, num_tasks= num_tasks)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size = batch_size, shuffle = isTrain, num_workers = num_workers)
     return dataloader
 
 if __name__ == '__main__':
+
+    # To get total number of tasks, use dl.dataset.num_tasks
+    # To set to a particular task, simply run dl.dataset.set_task(task_id)
+    # Now use the dataloader as it is and you will get *batches* of a task
+
+
     # Pass isTrain and isValid to suitably get the correct split
     dl = get_cifar100_dataloader(num_workers= 0) # Train dl
     test_dl = get_cifar100_dataloader(isTrain = False, num_workers= 0) # Test dl
