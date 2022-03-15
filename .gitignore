@@ -132,3 +132,4 @@ dmypy.json
 datasets
 *.pth
 cifar100
+.idea
