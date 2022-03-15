@@ -33,54 +33,56 @@ class FeatureExtractor(nn.Module):
         return emb, soft
 
 
+def TrainFeature(net, data, Loss=nn.NLLLoss(), epochs=50):
+    optimizer = net.optimizer
+    for epoch in range(epochs):
+        correct = 0
+        loss_ = 0.0
+        length = 0
+        for i, (img, label, img_feats) in enumerate(data):
+            optimizer.zero_grad()
+            emb, predictions = net(img)
+            pred = torch.max(predictions, 1)[1]
+            loss = Loss(predictions, label)
+            loss.backward()
+            optimizer.step()
+            #if i == 5:
+            #    break
+            correct += (pred == label).float().sum().item()
+            loss_ += loss.item()
+            length += img.shape[0]
+        acc = correct / length
+    print('Epoch [{}/{}], Loss: {:.7f}, Accuracy: {:.4f}'.format(epoch + 1, epochs, loss_ / length, acc))
+    return net
+
+
 # def TrainFeature(net, data, Loss=nn.NLLLoss(), epochs=50):
-#     optimizer = net.optimizer
-#     for epoch in range(epochs):
-#         correct = 0
-#         loss_ = 0.0
-#         length = 0
-#         for i, (img, label, img_feats) in enumerate(data):
+#     #nets = {}
+#     for i, (img, label, img_feats) in enumerate(data):
+#         #net_t = net
+#         #print(f"Task ID - {i}")
+#         optimizer = net.optimizer
+#         for epoch in range(epochs):
 #             optimizer.zero_grad()
 #             emb, predictions = net(img)
 #             pred = torch.max(predictions, 1)[1]
 #             loss = Loss(predictions, label)
 #             loss.backward()
 #             optimizer.step()
-#             #if i == 5:
-#             #    break
-#             correct += (pred == label).float().sum().item()
-#             loss_ += loss.item()
-#             length += img.shape[0]
-#         acc = correct / length
-#         print('Epoch [{}/{}], Loss: {:.7f}, Accuracy: {:.4f}'.format(epoch + 1, epochs, loss_ / length, acc))
+#             correct = (pred == label).float().sum().item()
+#             loss_ = loss.item()
+#             length = img.shape[0]
+#             acc = correct / length
+#         print('Epoch [{}/{}], Loss: {:.7f}, Accuracy: {:.4f}'.format(epochs, epochs, loss_ / length, acc))
+#         #nets[i] = net_t
 #     return net
 
 
-def TrainFeature(net, data, Loss=nn.NLLLoss(), epochs=50):
-    nets = {}
+def get_feature_embedding(net, data):
+    embedding_batches = []
     for i, (img, label, img_feats) in enumerate(data):
-        net_t = net
-        print(f"Task ID - {i}")
-        optimizer = net_t.optimizer
-        for epoch in range(epochs):
-            optimizer.zero_grad()
-            emb, predictions = net_t(img)
-            pred = torch.max(predictions, 1)[1]
-            loss = Loss(predictions, label)
-            loss.backward()
-            optimizer.step()
-            correct = (pred == label).float().sum().item()
-            loss_ = loss.item()
-            length = img.shape[0]
-            acc = correct / length
-        print('Epoch [{}/{}], Loss: {:.7f}, Accuracy: {:.4f}'.format(epochs, epochs, loss_ / length, acc))
-        nets[i] = net_t
-    return nets
-
-
-def get_feature_embedding(nets, task_id, img):
-    net = nets[task_id]
-    embedding = net(img)
-    return embedding
+        embedding, _ = net(img)
+        embedding_batches.append(embedding)
+    return embedding_batches
 
 
