@@ -5,6 +5,7 @@ import torch
 import os
 import numpy as np
 from PIL import Image
+from utils import FeatureExtractor as fe
 
 
 class CIFARDataset(Dataset):
@@ -48,24 +49,29 @@ if __name__ == '__main__':
     dl = get_cifar100_dataloader(num_workers= 0) # Train dl
     test_dl = get_cifar100_dataloader(isTrain = False, num_workers= 0) # Test dl
     valid_dl = get_cifar100_dataloader(isTrain = False, isValid = True, num_workers= 0) # Valid dl
-    print(f'Current Task Id: {dl.dataset.task_id}')
+    # print(f'Current Task Id: {dl.dataset.task_id}')
     # There are 3 outputs, see original code for why 3 variables were returned instead of 2
-    for i, (img, label, img_feats) in enumerate(dl):
+    net = fe.FeatureExtractor(sample_dim=32, input_size=3, hidden_size=32, output_size=128, lr=0.01)
+    nets = fe.TrainFeature(net, dl)
+    for i, (img, label, img_feats) in enumerate(test_dl):
         print(f'{i} - {label}')
-        print(img.shape)
-        print(img_feats.shape)
+        #print(img.shape)
+        #print(img_feats.shape)
+        embedding, _ = fe.get_feature_embedding(nets, i, img)
+        print(embedding.shape)
+        print(embedding)
         if i == 3:
             break
 
-    # Switch to second task, initially task is 0
-    dl.dataset.set_task(2)
-    print(f'Current Task Id: {dl.dataset.task_id}')
-    for i, (img, label, img_feats) in enumerate(dl):
-        print(f'{i} - {label}')
-        print(img.shape)
-        print(img_feats.shape)
-        if i == 3:
-            break
+    # # Switch to second task, initially task is 0
+    # dl.dataset.set_task(2)
+    # print(f'Current Task Id: {dl.dataset.task_id}')
+    # for i, (img, label, img_feats) in enumerate(dl):
+    #     print(f'{i} - {label}')
+    #     print(img.shape)
+    #     print(img_feats.shape)
+    #     if i == 3:
+    #         break
 
 
 
