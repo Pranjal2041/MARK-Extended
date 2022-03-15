@@ -5,7 +5,7 @@ import torch
 import os
 import numpy as np
 from PIL import Image
-from utils import FeatureExtractor as fe
+# from utils import FeatureExtractor as fe
 
 
 class CIFARDataset(Dataset):
@@ -37,8 +37,7 @@ class CIFARDataset(Dataset):
     def __getitem__(self, idx):
         # TODO: Prefer transpose in original dataset
         img = Image.fromarray(self.X[idx].transpose(1, 2, 0).astype(np.uint8))
-        return self.transformation(img), self.Y[idx], self.transformation_feats(img)
-
+        return self.transformation(img), self.Y[idx]
 
 def get_cifar100_dataloader(fol = 'datasets', isTrain=True, isValid=False, batch_size=16, num_workers=4, num_tasks=20):
     dataset = CIFARDataset(os.path.join(fol, f'cifar100_{"train" if isTrain else "val" if isValid else "test"}.h5'), isTrain, num_tasks=num_tasks)
@@ -58,21 +57,21 @@ if __name__ == '__main__':
     valid_dl = get_cifar100_dataloader(isTrain=False, isValid=True, num_workers=0) # Valid dl
     # print(f'Current Task Id: {dl.dataset.task_id}')
     # There are 3 outputs, see original code for why 3 variables were returned instead of 2
-    net = fe.FeatureExtractor(sample_dim=32, input_size=3, hidden_size=32, output_size=128, lr=0.01)
-    num_tasks = train_dl.dataset.num_tasks
-    nets = {}
-    for task_id in range(num_tasks):
-        print(f'Task Id: {task_id}')
-        train_dl.dataset.set_task(task_id)
-        task_net = fe.TrainFeature(net, train_dl)
-        nets[task_id] = task_net
+    # net = fe.FeatureExtractor(sample_dim=32, input_size=3, hidden_size=32, output_size=128, lr=0.01)
+    # num_tasks = train_dl.dataset.num_tasks
+    # nets = {}
+    # for task_id in range(num_tasks):
+    #     print(f'Task Id: {task_id}')
+    #     train_dl.dataset.set_task(task_id)
+    #     task_net = fe.TrainFeature(net, train_dl)
+    #     nets[task_id] = task_net
 
-    num_tasks = test_dl.dataset.num_tasks
-    for task_id in range(num_tasks):
-        print(f'Task Id: {task_id}')
-        test_dl.dataset.set_task(task_id)
-        embedding = fe.get_feature_embedding(nets[task_id], test_dl)
-        print(embedding)
+    # num_tasks = test_dl.dataset.num_tasks
+    # for task_id in range(num_tasks):
+    #     print(f'Task Id: {task_id}')
+    #     test_dl.dataset.set_task(task_id)
+    #     embedding = fe.get_feature_embedding(nets[task_id], test_dl)
+    #     print(embedding)
     # nets = fe.TrainFeature(net, dl)
     # for i, (img, label, img_feats) in enumerate(test_dl):
     #     print(f'{i} - {label}')

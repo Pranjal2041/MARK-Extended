@@ -27,7 +27,7 @@ def download_dataset(dset_name, link, save_dir):
 def cifar_to_h5py(dset, filename, num_classes = 100, num_tasks = 20, val_split = 0.2, isTrain = True):
     classes_shuff = np.random.permutation(np.arange(num_classes))
     label_to_task = {ii:i%num_tasks for i,ii in enumerate(classes_shuff)}
-
+    label_to_pseudo_label = {classes_shuff[i]:i//20 for i in range(num_classes)}
     train_dset = [[] for _ in range(num_tasks)]
     for item in dset:
         lab = item[1]
@@ -39,27 +39,33 @@ def cifar_to_h5py(dset, filename, num_classes = 100, num_tasks = 20, val_split =
     f  = h5py.File(filename,'w')
     for task in range(20):
         X = np.stack([x[0] for x in train_dset[task]])
-        Y = np.stack([x[1] for x in train_dset[task]])
+        Y = np.stack([label_to_pseudo_label[x[1]] for x in train_dset[task]])
+        Y_orig = np.stack([x[1] for x in train_dset[task]])
         if isTrain:
             indices = np.arange(X.shape[0])
             np.random.shuffle(indices)
             size = int(val_split*X.shape[0])
             X_val = X[indices[:size]]
             Y_val = Y[indices[:size]]
+            Y_orig_val = Y[indices[:size]]
             X = X[indices[size:]]
             Y = Y[indices[size:]]
+            Y_orig = Y_orig[indices[size:]]
             gr_val = f_val.create_group(str(task))
             gr_val.create_dataset('X',data=X_val)
             gr_val.create_dataset('Y',data=Y_val)
+            gr_val.create_dataset('Y_orig',data=Y_orig_val)
 
         gr = f.create_group(str(task))
         gr.create_dataset('X',data=X)
         gr.create_dataset('Y',data=Y)
+        gr.create_dataset('Y_orig',data=Y_orig)
     f.close()
     if isTrain:
         f_val.close()
 
 def prepare(dset, save_dir = 'datasets'):
+    os.makedirs(save_dir, exist_ok = True)
     if dset['name'] == 'cifar100':
         tr_set = torchvision.datasets.CIFAR100(root='./cifar100', train=True, download=True, transform=transforms.ToTensor())
         cifar_to_h5py(tr_set, os.path.join(save_dir, 'cifar100_train.h5'))

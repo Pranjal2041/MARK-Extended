@@ -27,8 +27,10 @@ class FeatureExtractor(nn.Module):
         x = F.relu(x)
         x = F.max_pool2d(x, (2, 2))
         x = x.flatten(start_dim=1, end_dim=-1)
+
+        # Feature Classifier
         x = self.linear(x)
-        emb = F.relu(x)
+        emb = F.relu(x) # Generally No ReLU is used in the last layer!!!
         soft = self.logsoft(emb)
         return emb, soft
 
@@ -39,7 +41,7 @@ def TrainFeature(net, data, Loss=nn.NLLLoss(), epochs=50):
         correct = 0
         loss_ = 0.0
         length = 0
-        for i, (img, label, img_feats) in enumerate(data):
+        for i, (img, label) in enumerate(data):
             optimizer.zero_grad()
             emb, predictions = net(img)
             pred = torch.max(predictions, 1)[1]
