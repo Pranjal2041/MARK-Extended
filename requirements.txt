@@ -3,4 +3,4 @@ torchvision==0.11.2
 learn2learn==0.1.7
 opencv-python==4.5.5
 h5py
-PIL==8.4.0 
+Pillow==8.4.0 
