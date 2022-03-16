@@ -6,7 +6,7 @@ from typing import List
 
 from models import FeatureExtractor, FeatureExtractorClassifier, KBClassifier, KB, MaskGenerator
 from models import MARKModel
-from trainer import get_optimizer
+from trainer import test_loop
 from trainer import train_fe, train_kb_nonmeta, train_mg_n_clf
 from dataloaders import get_cifar100_dataloader
 
@@ -27,19 +27,49 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, device, num_t
 
         # Step 1: First train the feature extractor on task 
         # Note: 50 epochs are more than enough
+        print(f'Training Feature Extractor on task id {task_id}')
         train_fe(model, train_dl, criterion, task_id, device = device, lr = 1e-1, num_epochs = 20)
+        loss, acc = test_loop(lambda x, task_id : model.fecs[task_id](model.fes[task_id](x)), val_dl, task_id, device = device)
+        print(f'Feature Extraction Validation Loss {loss} & Accuracy: {acc}')
+        
+        print('\n---------------------------------------------------------\n')
 
         # Step 2: Now if task is 0, train the KB without Meta-Learning
         if task_id == 0:
+            print(f'Training Initial Knowledge Base Weights')
             train_kb_nonmeta(model, train_dl, criterion, task_id, device = device)
+            loss, acc = test_loop(model, val_dl, task_id, device = device)
+            print(f'Initial KB Validation Loss {loss} & Accuracy: {acc}')
+
+            print('\n---------------------------------------------------------\n')
 
         # Step 3: Now train MaskGenerator and Classifier
+        print(f'Training Mask Generator and Classifer')
         train_mg_n_clf(model, train_dl, criterion, task_id, device = device)
+        loss, acc = test_loop(model, val_dl, task_id, device = device)
+        print(f'Mask Generation and Classifer Validation Loss {loss} & Accuracy: {acc}')
 
+        print('\n---------------------------------------------------------\n')
 
-        # TODO: Now finally update the KB using meta-learning
+        # TODO: Stage 4: update the KB using meta-learning
 
     
+        # TODO: Stage 5: Fine-Tune Mask Generator and Final Classfier
+        print(f'Fine-Tune Mask Generator and Classifer')
+        train_mg_n_clf(model, train_dl, criterion, task_id, device = device)
+        loss, acc = test_loop(model, val_dl, task_id, device = device)
+        print(f'Fine-Tuning Mask Generation and Classifer Validation Loss {loss} & Accuracy: {acc}')
+
+
+        print('\n---------------------------------------------------------\n')
+
+
+        # Now report the numbers for task = 0 upto task = task_id
+        print(f'Evaluating on tasks {0} to {task_id}\n')
+        for t_id in range(task_id+1):
+            loss, acc = test_loop(model, test_dl, t_id, device = device)
+            print(f'Testing Loss for task = {t_id}: {loss}')
+            print(f'Testing Accuracy for task = {t_id}: {acc}\n')
 
 def main(cfg = None):
     # TODO: Add config loading code
