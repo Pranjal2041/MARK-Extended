@@ -6,7 +6,7 @@ from typing import List
 
 from models import FeatureExtractor, FeatureExtractorClassifier, KBClassifier, KB, MaskGenerator
 from models import MARKModel
-
+from trainer import get_optimizer
 from trainer import train_fe, train_kb_nonmeta, train_mg_n_clf
 from dataloaders import get_cifar100_dataloader
 
@@ -37,7 +37,7 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, device, num_t
         train_mg_n_clf(model, train_dl, criterion, task_id, device = device)
 
 
-        # Now finally update the KB using meta-learning
+        # TODO: Now finally update the KB using meta-learning
 
     
 
