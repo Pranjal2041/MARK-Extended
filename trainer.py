@@ -9,7 +9,7 @@ def train_mg_n_clf(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epo
     mg = model.mgs[task_id]
     kbc = model.kbcs[task_id]
 
-    optimizer = optim.AdamW(list(mg.parameters()) + list(kbc.parameters()), lr = lr)
+    optimizer = optim.AdamW(list(mg.parameters()) + list(kbc.parameters()), lr = lr, weight_decay=1e-2)
 
     for epoch in range(num_epochs):
         correct = 0
@@ -57,7 +57,7 @@ def train_kb_nonmeta(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_e
         print('Epoch [{}/{}], Loss: {:.7f}, Accuracy: {:.4f}'.format(epoch + 1, num_epochs, loss_ / (i+1), acc))
 
 
-def train_fe(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epochs=4, device = torch.device('cuda')):
+def train_fe(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epochs=50, device = torch.device('cuda')):
     # TODO: Create AverageMeter and Other Utils
 
     fe = model.fes[task_id]

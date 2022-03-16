@@ -26,7 +26,8 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, device, num_t
         test_dl.dataset.set_task(task_id)
 
         # Step 1: First train the feature extractor on task 
-        train_fe(model, train_dl, criterion, task_id, device = device)
+        # Note: 50 epochs are more than enough
+        train_fe(model, train_dl, criterion, task_id, device = device, lr = 1e-1, num_epochs = 20)
 
         # Step 2: Now if task is 0, train the KB without Meta-Learning
         if task_id == 0:
@@ -53,9 +54,9 @@ def main(cfg = None):
     criterion = nn.CrossEntropyLoss().to(device)
     # Different optimizers will be created as and when needed.
    
-    train_dl = get_cifar100_dataloader(num_workers=0) # Train dl
-    test_dl = get_cifar100_dataloader(isTrain=False, num_workers=0) # Test dl
-    val_dl = get_cifar100_dataloader(isTrain=False, isValid=True, num_workers=0) # Valid dl
+    train_dl = get_cifar100_dataloader(num_workers=0, batch_size = 128) # Train dl
+    test_dl = get_cifar100_dataloader(isTrain=False, num_workers=0, batch_size = 128) # Test dl
+    val_dl = get_cifar100_dataloader(isTrain=False, isValid=True, num_workers=0, batch_size = 128) # Valid dl
 
     train(model, criterion, train_dl, val_dl, test_dl, device)
 

@@ -48,8 +48,7 @@ class FeatureExtractorClassifier(nn.Module):
 
 class FeatureExtractor(nn.Module):
 
-    # TODO: Resolve the discrepancy between official code and info given in appendix
-    # Currently, appendix was used
+    # Prefer modules over functional activations and pooling for more flexibility?
     def __init__(self, in_channels, hidden_size, output_size):
         super().__init__()
         self.in_channels = in_channels

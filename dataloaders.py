@@ -19,11 +19,6 @@ class CIFARDataset(Dataset):
 
         # TODO: Understand why exactly this is needed
         self.transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-        self.transformation_feats = transforms.Compose([transforms.Resize(32),
-                                        transforms.CenterCrop(28), 
-                                        transforms.ToTensor(), 
-                                        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-
                 
     def set_task(self, task_id):
         self.task_id = task_id
@@ -36,7 +31,7 @@ class CIFARDataset(Dataset):
 
     def __getitem__(self, idx):
         # TODO: Prefer transpose in original dataset
-        img = Image.fromarray(self.X[idx].transpose(1, 2, 0).astype(np.uint8))
+        img = Image.fromarray((255*self.X[idx]).transpose(1, 2, 0).astype(np.uint8))
         return self.transformation(img), self.Y[idx]
 
 def get_cifar100_dataloader(fol = 'datasets', isTrain=True, isValid=False, batch_size=16, num_workers=4, num_tasks=20):

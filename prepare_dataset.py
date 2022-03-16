@@ -47,7 +47,7 @@ def cifar_to_h5py(dset, filename, num_classes = 100, num_tasks = 20, val_split =
             size = int(val_split*X.shape[0])
             X_val = X[indices[:size]]
             Y_val = Y[indices[:size]]
-            Y_orig_val = Y[indices[:size]]
+            Y_orig_val = Y_orig[indices[:size]]
             X = X[indices[size:]]
             Y = Y[indices[size:]]
             Y_orig = Y_orig[indices[size:]]
