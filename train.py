@@ -7,7 +7,7 @@ from typing import List
 from models import FeatureExtractor, FeatureExtractorClassifier, KBClassifier, KB, MaskGenerator
 from models import MARKModel
 from trainer import test_loop
-from trainer import train_fe, train_kb_nonmeta, train_mg_n_clf
+from trainer import train_fe, train_kb_nonmeta, train_mg_n_clf, update_kb
 from dataloaders import get_cifar100_dataloader
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -28,7 +28,7 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, device, num_t
         # Step 1: First train the feature extractor on task 
         # Note: 50 epochs are more than enough
         print(f'Training Feature Extractor on task id {task_id}')
-        train_fe(model, train_dl, criterion, task_id, device = device, lr = 1e-1, num_epochs = 20)
+        train_fe(model, train_dl, criterion, task_id, device = device, lr = 1e-1, num_epochs = 5)
         loss, acc = test_loop(lambda x, task_id : model.fecs[task_id](model.fes[task_id](x)), val_dl, task_id, device = device)
         print(f'Feature Extraction Validation Loss {loss} & Accuracy: {acc}')
         
@@ -37,28 +37,56 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, device, num_t
         # Step 2: Now if task is 0, train the KB without Meta-Learning
         if task_id == 0:
             print(f'Training Initial Knowledge Base Weights')
-            train_kb_nonmeta(model, train_dl, criterion, task_id, device = device)
+            train_kb_nonmeta(model, train_dl, criterion, task_id, device = device, num_epochs = 5)
             loss, acc = test_loop(model, val_dl, task_id, device = device)
             print(f'Initial KB Validation Loss {loss} & Accuracy: {acc}')
 
             print('\n---------------------------------------------------------\n')
 
         # Step 3: Now train MaskGenerator and Classifier
-        print(f'Training Mask Generator and Classifer')
-        train_mg_n_clf(model, train_dl, criterion, task_id, device = device)
+        print(f'Training Mask Generator and Classifier')
+        train_mg_n_clf(model, train_dl, criterion, task_id, device = device, num_epochs = 5)
         loss, acc = test_loop(model, val_dl, task_id, device = device)
-        print(f'Mask Generation and Classifer Validation Loss {loss} & Accuracy: {acc}')
+        print(f'Mask Generation and Classifier Validation Loss {loss} & Accuracy: {acc}')
 
         print('\n---------------------------------------------------------\n')
 
         # TODO: Stage 4: update the KB using meta-learning
+        print('Updating KB')
+        # d={}
+        # d['model']=model
+        # d['train_dl']=train_dl
+        # d['val_dl'] = val_dl
+        # d['test_dl'] = test_dl
+        # d['criterion']=criterion
+        # d['task_id']=task_id
+        # d['device']=device
+        # import pickle
+        # with open('filename.pickle', 'wb') as handle:
+        #     pickle.dump(d, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        #
+        # with open('filename.pickle', 'rb') as handle:
+        #     d = pickle.load(handle)
+        #
+        # model=d['model']
+        # train_dl=d['train_dl']
+        # val_dl=d['val_dl']
+        # test_dl=d['test_dl']
+        # criterion=d['criterion']
+        # task_id=d['task_id']
+        # device=d['device']
 
-    
-        # TODO: Stage 5: Fine-Tune Mask Generator and Final Classfier
-        print(f'Fine-Tune Mask Generator and Classifer')
+        update_kb(model, train_dl, val_dl, criterion, task_id, device=device)
+        loss, acc = test_loop(model, val_dl, task_id, device=device)
+        print(f'Update KB {loss} & Accuracy: {acc}')
+
+        print('\n---------------------------------------------------------\n')
+
+        # Stage 5: Fine-Tune Mask Generator and Final Classifier
+        print(f'Fine-Tune Mask Generator and Classifier')
         train_mg_n_clf(model, train_dl, criterion, task_id, device = device)
         loss, acc = test_loop(model, val_dl, task_id, device = device)
-        print(f'Fine-Tuning Mask Generation and Classifer Validation Loss {loss} & Accuracy: {acc}')
+        print(f'Fine-Tuning Mask Generation and Classifier Validation Loss {loss} & Accuracy: {acc}')
 
 
         print('\n---------------------------------------------------------\n')
@@ -89,7 +117,6 @@ def main(cfg = None):
     val_dl = get_cifar100_dataloader(isTrain=False, isValid=True, num_workers=0, batch_size = 128) # Valid dl
 
     train(model, criterion, train_dl, val_dl, test_dl, device)
-
 
 
 if __name__ == '__main__':
