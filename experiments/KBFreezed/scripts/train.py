@@ -58,13 +58,13 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, experimenter,
 
         print('\n---------------------------------------------------------\n')
 
-        # if(task_id == 0):
-        print('Updating KB')
-        update_kb(model, train_dl, val_dl, criterion, task_id, device=device)
-        loss, acc = test_loop(model, val_dl, task_id, device=device)
-        print(f'Update KB {loss} & Accuracy: {acc}')
+        if(task_id == 0):
+            print('Updating KB')
+            update_kb(model, train_dl, val_dl, criterion, task_id, device=device)
+            loss, acc = test_loop(model, val_dl, task_id, device=device)
+            print(f'Update KB {loss} & Accuracy: {acc}')
 
-        print('\n---------------------------------------------------------\n')
+            print('\n---------------------------------------------------------\n')
 
         # Stage 5: Fine-Tune Mask Generator and Final Classifier
         print(f'Fine-Tune Mask Generator and Classifier')
@@ -80,8 +80,7 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, experimenter,
         print(f'Evaluating on tasks {0} to {task_id}\n', priority = LogPriority.MEDIUM)
         avg_loss = 0
         for t_id in range(task_id+1):
-            if t_id != 0:
-                test_dl.dataset.set_task(t_id)
+            test_dl.dataset.set_task(t_id)
             loss, acc = test_loop(model, test_dl, t_id, device = device)
             print(f'Testing Loss for task = {t_id}: {loss}', priority = LogPriority.MEDIUM if task_id != experimenter.cfg.DATASET.NUM_TASKS-1 else LogPriority.STATS )
             print(f'Testing Accuracy for task = {t_id}: {acc}\n', priority = LogPriority.MEDIUM if task_id != experimenter.cfg.DATASET.NUM_TASKS-1 else LogPriority.STATS)

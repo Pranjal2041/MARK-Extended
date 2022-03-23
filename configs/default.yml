@@ -20,9 +20,9 @@ TRAINING:
     FINETUNE_MG_N_C: 2e-5
 
   EPOCHS:
-    FE: 20
+    FE: 50
     INIT_KB: 50
     MG_N_C: 50
-    FINETUNE_MG_N_C: 30
+    FINETUNE_MG_N_C: 40
   
   BATCH_SIZE: 128

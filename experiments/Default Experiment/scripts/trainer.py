@@ -152,7 +152,6 @@ def get_gamma(model, val_dl, j, k, task_id, criterion, device = torch.device('cu
 def test_loop(model : Union[MARKModel, Callable[[torch.tensor, int], torch.tensor]], dl, task_id, criterion = nn.CrossEntropyLoss(), device = torch.device('cuda')) -> Tuple[float, float]:
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
-    dl.dataset.set_task(task_id)
     for _, (img, label) in enumerate(dl):
         img = img.to(device)
         label = label.to(device)

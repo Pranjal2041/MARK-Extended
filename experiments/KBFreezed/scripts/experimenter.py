@@ -101,7 +101,7 @@ class Experimenter:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg_file', type=str, default='configs/debug.yml')
+    parser.add_argument('--cfg_file', type=str, default='configs/default.yml')
     args = parser.parse_args()
     exp = Experimenter(args.cfg_file)
     exp.run_experiment()
