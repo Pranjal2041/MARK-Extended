@@ -52,7 +52,9 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, experimenter,
 
         # Step 3: Now train MaskGenerator and Classifier
         print(f'Training Mask Generator and Classifier')
+        print('Before',sum([x.sum() for x in model.mgs[task_id].parameters()]))
         train_mg_n_clf(model, train_dl, criterion, task_id, lr = float(experimenter.config.TRAINING.LR.MG_N_C), device = device, num_epochs = experimenter.config.TRAINING.EPOCHS.MG_N_C)
+        print('After',sum([x.sum() for x in model.mgs[task_id].parameters()]))
         loss, acc = test_loop(model, val_dl, task_id, device = device)
         print(f'Mask Generation and Classifier Validation Loss {loss} & Accuracy: {acc}')
 
@@ -60,9 +62,11 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, experimenter,
 
         # if(task_id == 0):
         print('Updating KB')
+        print('Before',sum([x.sum() for x in model.kb.parameters()]))
         update_kb(model, train_dl, val_dl, criterion, task_id, device=device)
         loss, acc = test_loop(model, val_dl, task_id, device=device)
         print(f'Update KB {loss} & Accuracy: {acc}')
+        print('After',sum([x.sum() for x in model.kb.parameters()]))
 
         print('\n---------------------------------------------------------\n')
 
@@ -108,4 +112,5 @@ if __name__ == '__main__':
     cfg_file = 'configs/cifar100.yml'
     experimenter = Experimenter(cfg_file)
 
-    main(experimenter.config, experimenter)
+    # main(experimenter.config, experimenter)
+    experimenter.run_experiment()

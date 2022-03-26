@@ -26,9 +26,9 @@ def train_fe(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epochs=50
     train_loop(model_fn, dl, optimizer, criterion, task_id, num_epochs = num_epochs, device = device)
 
 
-def update_kb(model, train_dl, val_dl, criterion, task_id, lr = 1e-3, device=torch.device('cuda')):
+def update_kb(model, train_dl, val_dl, criterion, task_id, lr = 1e-2, device=torch.device('cuda')):
 
-    optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
+    # optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
     # optimizer_kbcs = optim.SGD(list(model.kbcs[task_id].parameters()), lr=lr, weight_decay=1e-2)
     # print('BeforeF', sum([x.sum() for x in model.kb.parameters()]))
     # print('BeforeF', sum([x.sum() for x in model.kb.parameters()]))
