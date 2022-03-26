@@ -20,7 +20,7 @@ class Experimenter:
 
     def __init__(self, cfg_file, BASE_DIR = 'experiments'):
         self.cfg_file = cfg_file        
-        
+        self.curr_epoch = 0
         self.con = AdvancedConfig(cfg_file)
         self.config = self.con.config
         self.cfg = self.config

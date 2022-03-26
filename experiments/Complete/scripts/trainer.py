@@ -52,7 +52,7 @@ def train_update_kb(model, train_dl, val_dl, optimizer_kb, optimizer_kbcs, crite
             loss, acc = train_batch(model, img, label, optimizer_kb, criterion, task_id, e_inner, device)
             loss_meter.update(loss, e_inner)
             acc_meter.update(acc, e_inner)
-            gamma[i] = get_gamma(model, val_dl, k, i, task_id, criterion)
+            gamma[i] = get_gamma(model, val_dl, k, i, task_id, criterion, device)
             kb_k[i] = copy.deepcopy(model.kb)
             model.kb = copy.deepcopy(kb)
 

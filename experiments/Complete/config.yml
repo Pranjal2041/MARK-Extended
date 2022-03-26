@@ -29,15 +29,15 @@ dictitems:
       BATCH_SIZE: 128
       EPOCHS: &id002 !!python/object/new:easydict.EasyDict
         dictitems:
-          FE: 50
-          FINETUNE_MG_N_C: 40
-          INIT_KB: 50
-          MG_N_C: 50
+          FE: 2
+          FINETUNE_MG_N_C: 2
+          INIT_KB: 2
+          MG_N_C: 2
         state:
-          FE: 50
-          FINETUNE_MG_N_C: 40
-          INIT_KB: 50
-          MG_N_C: 50
+          FE: 2
+          FINETUNE_MG_N_C: 2
+          INIT_KB: 2
+          MG_N_C: 2
       LR: &id003 !!python/object/new:easydict.EasyDict
         dictitems:
           FE: 1e-1
