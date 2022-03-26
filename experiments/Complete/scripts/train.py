@@ -91,6 +91,7 @@ def train(model : MARKModel, criterion, train_dl, val_dl, test_dl, experimenter,
 def main(cfg, experimenter):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cpu'
     model = MARKModel(cfg, device)
     criterion = nn.CrossEntropyLoss().to(device)
     # Different optimizers will be created as and when needed.
