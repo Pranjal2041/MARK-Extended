@@ -7,6 +7,7 @@ from utils import AverageMeter, get_acc
 from tqdm import tqdm
 import copy
 import itertools
+from models import KB
 
 # TODO: Also Include Validation in these functions itself
 
@@ -26,116 +27,32 @@ def train_fe(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epochs=50
     train_loop(model_fn, dl, optimizer, criterion, task_id, num_epochs = num_epochs, device = device)
 
 
-def update_kb(model, train_dl, val_dl, criterion, task_id, lr = 1e-3, device=torch.device('cuda')):
+def update_kb(model, train_dl, val_dl, criterion, task_id, lr = 1e-2, device=torch.device('cuda')):
 
-    optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
+    # optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
     # optimizer_kbcs = optim.SGD(list(model.kbcs[task_id].parameters()), lr=lr, weight_decay=1e-2)
-    print('BeforeF', sum([x.sum() for x in model.kb.parameters()]))
     # print('BeforeF', sum([x.sum() for x in model.kb.parameters()]))
-    train_update_kb(model, train_dl, val_dl, optimizer_kb, criterion, task_id, lr, device=device)
-    print('AfterF', sum([x.sum() for x in model.kb.parameters()]))
+    # print('BeforeF', sum([x.sum() for x in model.kb.parameters()]))
+    train_update_kb(model, train_dl, val_dl, criterion, task_id, lr, device=device)
+    # print('AfterF', sum([x.sum() for x in model.kb.parameters()]))
     # print('AfterF', sum([x.sum() for x in model.kb.parameters()]))
     # return model
 
 
-# def train_update_kb(model, train_dl, val_dl, optimizer_kb, criterion, task_id, lr, device=torch.device('cuda')):
-#     e_outer = 2
-#     e_inner = 10
-#     k = 10
-#     loss_meter = AverageMeter()
-#     acc_meter = AverageMeter()
-#     kb_k = {}
-#     gamma = {}
-#     # optim_kb = copy.deepcopy(optimizer_kb)
-#     # optim_clf = copy.deepcopy(optimizer_kbcs)
-#     # clf = copy.deepcopy(model.kbcs[task_id])
-#     epoch_bar = tqdm(range(e_outer), total=e_outer)
-#     for epoch in epoch_bar:
-#         kb = copy.deepcopy(model.kb)
-#         # print("....................................")
-#         # print ("Epoch" + str(epoch))
-#         for i, (img, label) in enumerate(train_dl):
-#             if i > k:
-#                 break
-#             img = img.to(device)
-#             label = label.to(device)
-#             # print ('Before', sum([x.sum() for x in model.parameters()]))
-#             # print('Before', sum([x.sum() for x in model.kb.parameters()]))
-#             # loss, acc = train_batch(model, img, label, optimizer_kb, criterion, task_id, e_inner, device)
-#             optimizer_kb_temp = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
-#             _, _ = train_batch(model, img, label, optimizer_kb_temp, criterion, task_id, e_inner, device)
-#             # print('After', sum([x.sum() for x in model.parameters()]))
-#             # print('After', sum([x.sum() for x in model.kb.parameters()]))
-#             # loss_meter.update(loss, e_inner)
-#             # acc_meter.update(acc, e_inner)
-#             # print("Loss" + str(loss))
-#             # print("acc" + str(acc))
-#
-#             gamma[i] = get_gamma(model, val_dl, k, i, task_id, criterion, device)
-#             # x=list(model.kb.parameters())
-#             kb_k[i] = copy.deepcopy(model.kb)
-#             model.kb = copy.deepcopy(kb)
-#             # x1=list(kb_k[i].parameters())
-#             # x2=list(model.kb.parameters())
-#             # kbt = model.kb
-#             # optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
-#
-#
-#             loss, acc = train_batch(model, img, label, None, criterion, task_id, e_inner, device)
-#             loss_meter.update(loss, e_inner)
-#             acc_meter.update(acc, e_inner)
-#             # model.kbcs[task_id] = copy.deepcopy(clf)
-#             # optimizer_kbcs = copy.deepcopy(optim_clf)
-#
-#         # update KB
-#         delta_kb = {}
-#         delta_kb['diff'] = []
-#
-#         for i in range(k):
-#             grads = {}
-#             for (_, p_new), (n, p_old) in zip(kb_k[i].named_parameters(), model.kb.named_parameters()):
-#                 grads[n] = (p_new - p_old)
-#             delta_kb['diff'].append(grads)
-#
-#         delta_kb_final = {}
-#
-#         for n, p in model.kb.named_parameters():
-#             delta_kb_final[n] = torch.zeros_like(p)
-#
-#         for i, g in enumerate(delta_kb['diff']):
-#             for n in g:
-#                 delta_kb_final[n] += g[n] * (gamma[i]) / k
-#
-#         for n, p in model.kb.named_parameters():
-#             if n in delta_kb_final:
-#                 p.grad = delta_kb_final[n]
-#
-#         # model.train()
-#         optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
-#
-#         optimizer_kb.step()
-#         optimizer_kb.zero_grad()
-#
-#
-#         epoch_bar.set_postfix(loss=loss_meter.avg, accuracy=acc_meter.avg)
-#         epoch_bar.set_description(f'Epoch: {epoch + 1}')
-#         epoch_bar.update()
-#     # return model
-
-
-def train_update_kb(model, train_dl, val_dl, optimizer_kb, criterion, task_id, lr, device=torch.device('cuda')):
+def train_update_kb(model, train_dl, val_dl, criterion, task_id, lr, device=torch.device('cuda')):
     e_outer = 15
     e_inner = 40
     k = 10
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
     kb_k = {}
-    gamma = {}
-    # optim_kb = copy.deepcopy(optimizer_kb)
-    # optim_clf = copy.deepcopy(optimizer_kbcs)
-    # clf = copy.deepcopy(model.kbcs[task_id])
+    grads = dict()
+    accs_sum = 0.
+    optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
+
     epoch_bar = tqdm(range(e_outer), total=e_outer)
     for epoch in epoch_bar:
+        epoch_bar.update()
 
         # print("....................................")
         # print ("Epoch" + str(epoch))
@@ -144,87 +61,47 @@ def train_update_kb(model, train_dl, val_dl, optimizer_kb, criterion, task_id, l
                 break
             img = img.to(device)
             label = label.to(device)
-            kb = copy.deepcopy(model)
-            # print ('Before', sum([x.sum() for x in model.parameters()]))
-            # print('Before', sum([x.sum() for x in model.kb.parameters()]))
-            # loss, acc = train_batch(model, img, label, optimizer_kb, criterion, task_id, e_inner, device)
-            l=list(kb.parameters())
-            l1=sum([x.sum() for x in kb.kb.parameters()])
-            optimizer_kb_temp = optim.SGD(list(kb.kb.parameters()), lr=lr, weight_decay=1e-2)
+            model_cp = copy.deepcopy(model)
+            optimizer_kb_temp = optim.SGD(list(model_cp.kb.parameters())+list(model_cp.kbcs[task_id].parameters()), lr=lr * 0.1, weight_decay=1e-2, momentum = 0)
 
-            _, _ = train_batch(kb, img, label, optimizer_kb_temp, criterion, task_id, e_inner, device)
-            l2 = sum([x.sum() for x in kb.kb.parameters()])
-            x=list(kb.kb.parameters())
-            y=list(kb.kb.named_parameters())
-            # print('After', sum([x.sum() for x in model.parameters()]))
-            # print('After', sum([x.sum() for x in model.kb.parameters()]))
-            # loss_meter.update(loss, e_inner)
-            # acc_meter.update(acc, e_inner)
-            # print("Loss" + str(loss))
-            # print("acc" + str(acc))
-
-            gamma[i] = get_gamma(kb, val_dl, k, i, task_id, criterion, device)
-            # x=list(model.kb.parameters())
-            kb_k[i] = copy.deepcopy(kb.kb)
-            # model.kb = copy.deepcopy(kb)
-            # x1=list(kb_k[i].parameters())
-            # x2=list(model.kb.parameters())
-            # kbt = model.kb
-            # optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
-
-
-            loss, acc = train_batch(kb, img, label, None, criterion, task_id, e_inner, device)
+            _, _ = train_batch(model_cp, img, label, optimizer_kb_temp, criterion, task_id, e_inner, device)
+            
+            grads[i] = get_grads(model.kb, model_cp.kb)
+            
+            kb_k[i] = copy.deepcopy(model_cp.kb)
+            with torch.no_grad():
+                model_cp.eval()
+                # Note: Original code doesnt use this
+                img_val, label_val = next(iter(val_dl))
+                loss, acc = train_batch(model_cp, img_val, label_val, None, criterion, task_id, e_inner, device)
+                model_cp.train()
             loss_meter.update(loss, e_inner)
             acc_meter.update(acc, e_inner)
-            # model.kbcs[task_id] = copy.deepcopy(clf)
-            # optimizer_kbcs = copy.deepcopy(optim_clf)
+            # Now based on acc, change grads
+            accs_sum += acc
+            grads[i] = {k:v / acc for k,v in grads[i].items()}
 
-        # update KB
-        delta_kb = {}
-        delta_kb['diff'] = []
-        optimizer_kb = optim.SGD(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
         for i in range(k):
-            grads = {}
-            kl=[]
-            for (_, p_new), (n, p_old) in zip(kb_k[i].named_parameters(), model.kb.named_parameters()):
-                grads[n] = (p_new - p_old)
-                kl.append(sum([x.sum() for x in (p_new - p_old)]))
-            delta_kb['diff'].append(grads)
-
-        delta_kb_final = {}
-
-        for n, p in model.kb.named_parameters():
-            delta_kb_final[n] = torch.zeros_like(p)
-
-        for i, g in enumerate(delta_kb['diff']):
-            for n in g:
-                delta_kb_final[n] += g[n] * (gamma[i]) / k
-
-        for n, p in model.kb.named_parameters():
-            if n in delta_kb_final:
-                p.grad = delta_kb_final[n]
-
-        # model.train()
-
-
-        optimizer_kb.step()
+            grads[i] = {dict_k:v / (accs_sum * k) for dict_k,v in grads[i].items()}
+        
+        final_grads = dict()
+        final_grads = {n:sum([grads[i][n] for i in range(k)])  for n in grads[0]}
         optimizer_kb.zero_grad()
-
-
+        for name,param in model.kb.named_parameters():
+            param.grad = final_grads[name].to(device)
+        optimizer_kb.step()
         epoch_bar.set_postfix(loss=loss_meter.avg, accuracy=acc_meter.avg)
         epoch_bar.set_description(f'Epoch: {epoch + 1}')
         epoch_bar.update()
-    # return model
 
 
 def train_batch(model, img, label, optimizer, criterion, task_id, num_epochs, device = torch.device('cuda')):
     # epoch_bar = tqdm(range(num_epochs), total=num_epochs)
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
-
+    img = img.to(device)
+    label = label.to(device)
     for epoch in range(num_epochs):
-        img = img.to(device)
-        label = label.to(device)
         if optimizer is not None:
             optimizer.zero_grad()
         logits = model(img, task_id)
@@ -252,6 +129,8 @@ def train_loop(model : Union[MARKModel,Callable[[torch.tensor, int], torch.tenso
             optimizer.zero_grad()
             logits = model(img, task_id)
             loss = criterion(logits, label)
+            if (loss.item() > 100):
+                print("Prob is here")
             loss.backward()
             optimizer.step()
 
@@ -260,7 +139,13 @@ def train_loop(model : Union[MARKModel,Callable[[torch.tensor, int], torch.tenso
         epoch_bar.set_postfix(loss = loss_meter.avg, accuracy = acc_meter.avg)
         epoch_bar.set_description(f'Epoch: {epoch+1}')
         epoch_bar.update()
-
+from typing import Dict
+def get_grads(model_old : KB, model_new : KB) -> Dict[str, torch.nn.Parameter]:
+    grads = dict()
+    devi = torch.device('cpu')
+    for (_, params_old), (name, params_new) in zip(model_old.named_parameters(), model_new.named_parameters()):
+        grads[name] = params_new.detach().to(devi) - params_old.detach().to(devi)
+    return grads
 
 def get_gamma(model, val_dl, j, k, task_id, criterion, device = torch.device('cuda')):
     accs = 0.0

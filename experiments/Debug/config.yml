@@ -41,12 +41,12 @@ dictitems:
       LR: &id003 !!python/object/new:easydict.EasyDict
         dictitems:
           FE: 1e-1
-          FINETUNE_MG_N_C: 2e-5
+          FINETUNE_MG_N_C: 5e-2
           INIT_KB: 1e-1
           MG_N_C: 1e-1
         state:
           FE: 1e-1
-          FINETUNE_MG_N_C: 2e-5
+          FINETUNE_MG_N_C: 5e-2
           INIT_KB: 1e-1
           MG_N_C: 1e-1
     state:

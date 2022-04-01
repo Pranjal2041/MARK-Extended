@@ -5,6 +5,7 @@ import shutil
 
 def list_to_device(lis, device : str): return [x.to(device) for x in lis]
 
+def get_num_params_in_model(model : torch.nn.Module):  return sum(p.numel() for p in model.parameters())
 
 class AverageMeter:
     """Computes and stores the average and current value"""
