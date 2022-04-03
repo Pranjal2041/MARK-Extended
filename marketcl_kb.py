@@ -2,46 +2,51 @@ from dataloaders import get_marketcl_dataloader
 import torch
 from torch import nn
 from torch import optim
+from typing import List
 
 
-class FeatExtractorLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, lr):
+class LSTMKB(nn.Module):
+
+    def __init__(self, input_dim: int, output_dim: int, hidden_dims: List[int], lr):
         super().__init__()
-        ### INSERT YOUR CODE HERE
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
-        self.linear_1 = nn.Linear(hidden_size, output_size)
-        self.linear_2 = nn.Linear(hidden_size, output_size)
-        self.linear_3 = nn.Linear(hidden_size, output_size)
-        self.linear_4 = nn.Linear(hidden_size, output_size)
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.hidden_dims = hidden_dims
+
+        self.lstms: nn.ModuleList = nn.ModuleList()
+        self.lstms.append(
+            nn.LSTM(input_dim, hidden_dims[0], batch_first=True))
+        for h in hidden_dims[1:]:
+            self.lstms.append(
+                nn.LSTM(self.lstms[-1].hidden_size, h, batch_first=True))
+        self.fc_1 = nn.Linear(hidden_dims[-1], output_dim)
+        self.fc_2 = nn.Linear(hidden_dims[-1], output_dim)
+        self.fc_3 = nn.Linear(hidden_dims[-1], output_dim)
+        self.fc_4 = nn.Linear(hidden_dims[-1], output_dim)
         self.logsoft = nn.LogSoftmax(dim=-1)
         self.optimizer = optim.SGD(self.parameters(), lr=lr)
 
-    def forward(self, x, lengths):
-        if self.input_size == 1: x = x.unsqueeze(-1)
+    def forward(self, x, lengths, masks=None):
         x = x.float()
-        packed_seq = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
-        hidden = torch.zeros(1, x.size(0), self.hidden_size)
-        cell = torch.zeros(1, x.size(0), self.hidden_size)
-        x, _ = self.lstm(packed_seq, (hidden, cell))
-        x, _ = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
-        x_1 = self.linear_1(x)
+        size = x.size(0)
+        for i, lstm in enumerate(self.lstms):
+            hidden = torch.zeros(1, size, lstm.hidden_size)
+            cell = torch.zeros(1, size, lstm.hidden_size)
+            x = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
+            x, _ = lstm(x, (hidden, cell))
+            x, _ = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
+        x_1 = self.fc_1(x)
         x_1 = self.logsoft(x_1)
         x_1 = x_1[:, -1, :]
-
-        x_2 = self.linear_2(x)
+        x_2 = self.fc_2(x)
         x_2 = self.logsoft(x_2)
         x_2 = x_2[:, -1, :]
-
-        x_3 = self.linear_3(x)
+        x_3 = self.fc_3(x)
         x_3 = self.logsoft(x_3)
         x_3 = x_3[:, -1, :]
-
-        x_4 = self.linear_4(x)
+        x_4 = self.fc_4(x)
         x_4 = self.logsoft(x_4)
         x_4 = x_4[:, -1, :]
-
         return x_1, x_2, x_3, x_4
 
 
@@ -83,16 +88,14 @@ def Train(net, market_dl, Loss=nn.NLLLoss(), epochs=5):
 if __name__ == '__main__':
 
     market_dl = get_marketcl_dataloader()
-    NUM_TASKS = 5
+    NUM_TASKS = 1
     NUM_DAYS = 5
     fe = {}
     for task_id in range(NUM_TASKS):
         market_dl.dataset.set_symbol(task_id)
-        model = FeatExtractorLSTM(input_size=28, hidden_size=64, output_size=4, lr=1e-3)
+        model = LSTMKB(input_dim=28, hidden_dims=[64, 128, 256], output_dim=4, lr=1e-3)
         for day in range(NUM_DAYS):
-            print(f"training for task id: {task_id}, day {day}")
+            print(f"Training KB for task id: {task_id}, day {day}")
             market_dl.dataset.set_day(day)
             model = Train(model, market_dl)
         fe[task_id] = model
-        break
-
