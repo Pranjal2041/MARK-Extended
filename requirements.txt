@@ -5,3 +5,4 @@ opencv-python==4.5.5.62
 h5py
 Pillow==8.4.0
 easydict
+gdown

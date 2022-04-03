@@ -5,6 +5,7 @@ import torch
 import os
 import numpy as np
 from PIL import Image
+import pickle
 # from utils import FeatureExtractor as fe
 
 
@@ -39,6 +40,53 @@ def get_cifar100_dataloader(fol = 'datasets', isTrain=True, isValid=False, batch
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=isTrain, num_workers=num_workers)
     return dataloader
 
+
+class MarketDataset(Dataset):
+
+    def __init__(self, file = 'datasets/data_mean_na.pkl'):
+        self.file = file
+        self.data = pickle.load(open(file,'rb'))
+        self.day = 0
+        self.symbol = 0
+        self.num_days = len(self.data)
+        self.num_symbols = 308
+
+    def set_day(self, day_num):
+        self.day = day_num
+    
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+
+    def __len__(self, ):
+        return len(self.data[self.day][self.symbol])
+
+
+    # TODO: Should volume be normalized?
+    def __getitem__(self, idx, ):
+        df = self.data[self.day][self.symbol]
+        to_normalize = ['Open', 'High', 'Low', 'Close',
+            'Open_prev', 'High_prev', 'Low_prev', 'Close_prev', 'SMA_10', 'SMA_20', 'SMA_50', 'SMA_200',
+            'RSI_14', 'BBL_5_2.0', 'BBM_5_2.0', 'BBU_5_2.0',]
+        df[to_normalize]/=df.iloc[0]['Close'] # Note that repeated application doesnt change anything
+        ifeats = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends',
+            'Open_prev', 'High_prev', 'Low_prev', 'Close_prev', 'Volume_prev',
+            'Dividends_prev', 'hurst', 'SMA_10', 'SMA_20', 'SMA_50', 'SMA_200',
+            'VOL_SMA_20', 'RSI_14', 'BBL_5_2.0', 'BBM_5_2.0', 'BBU_5_2.0',
+            'BBB_5_2.0', 'BBP_5_2.0', 'MACD_12_26_9', 'MACDh_12_26_9',
+            'MACDs_12_26_9','sym']
+        inp_feats = df[ifeats]
+        lfeats = ['(0.02, 0.01)', '(0.01, 0.005)', '(0.01, 0.02)',
+            '(0.005, 0.01)']
+        labels = df[lfeats]
+        padding = torch.zeros(375 - idx - 1, inp_feats.values.shape[1])
+
+        return torch.vstack((torch.from_numpy(inp_feats[:idx+1].values),padding)), torch.from_numpy(labels.values[idx]), idx+1
+
+def get_marketcl_dataloader(fol = 'datasets', batch_size=8, num_workers=4, shuffle = True):
+    dataset = MarketDataset(os.path.join(fol, 'data_mean_na.pkl' ))
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    return dataloader
+
 if __name__ == '__main__':
 
     # To get total number of tasks, use dl.dataset.num_tasks
@@ -50,43 +98,3 @@ if __name__ == '__main__':
     train_dl = get_cifar100_dataloader(num_workers=0) # Train dl
     test_dl = get_cifar100_dataloader(isTrain=False, num_workers=0) # Test dl
     valid_dl = get_cifar100_dataloader(isTrain=False, isValid=True, num_workers=0) # Valid dl
-    # print(f'Current Task Id: {dl.dataset.task_id}')
-    # There are 3 outputs, see original code for why 3 variables were returned instead of 2
-    # net = fe.FeatureExtractor(sample_dim=32, input_size=3, hidden_size=32, output_size=128, lr=0.01)
-    # num_tasks = train_dl.dataset.num_tasks
-    # nets = {}
-    # for task_id in range(num_tasks):
-    #     print(f'Task Id: {task_id}')
-    #     train_dl.dataset.set_task(task_id)
-    #     task_net = fe.TrainFeature(net, train_dl)
-    #     nets[task_id] = task_net
-
-    # num_tasks = test_dl.dataset.num_tasks
-    # for task_id in range(num_tasks):
-    #     print(f'Task Id: {task_id}')
-    #     test_dl.dataset.set_task(task_id)
-    #     embedding = fe.get_feature_embedding(nets[task_id], test_dl)
-    #     print(embedding)
-    # nets = fe.TrainFeature(net, dl)
-    # for i, (img, label, img_feats) in enumerate(test_dl):
-    #     print(f'{i} - {label}')
-    #     #print(img.shape)
-    #     #print(img_feats.shape)
-    #     embedding, _ = fe.get_feature_embedding(nets, i, img)
-    #     print(embedding.shape)
-    #     print(embedding)
-    #     if i == 3:
-    #         break
-
-    # # Switch to second task, initially task is 0
-    # dl.dataset.set_task(2)
-    # print(f'Current Task Id: {dl.dataset.task_id}')
-    # for i, (img, label, img_feats) in enumerate(dl):
-    #     print(f'{i} - {label}')
-    #     print(img.shape)
-    #     print(img_feats.shape)
-    #     if i == 3:
-    #         break
-
-
-

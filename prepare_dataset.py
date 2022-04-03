@@ -6,6 +6,7 @@ import numpy as np
 import torchvision
 import torchvision.transforms as transforms
 import h5py
+import gdown
 
 def download_dataset(dset_name, link, save_dir):
     os.makedirs(save_dir, exist_ok=True)
@@ -74,6 +75,12 @@ def prepare(dset, save_dir = 'datasets'):
         cifar_to_h5py(tr_set, os.path.join(save_dir, 'cifar100_train.h5'), num_classes = 100, classes_shuff = classes_shuff)
         ts_set = torchvision.datasets.CIFAR100(root='./cifar100', train=False, download=True, transform=transforms.ToTensor())
         cifar_to_h5py(ts_set, os.path.join(save_dir, 'cifar100_test.h5'), isTrain = False, num_classes = 100, classes_shuff = classes_shuff)
+    elif dset['name'] == 'market_cl':
+        zip_file_path = os.path.join(save_dir, dset['filename'])
+        gdown.cached_download(dset['link'], zip_file_path)
+        with zipfile.ZipFile(zip_file_path) as zf:
+            zf.extractall(save_dir)
+        os.remove(zip_file_path)
     else:
         if not dset['link']: dset['link'] = 'https://github.com/gmshroff/metaLearning2022/raw/main/data/{}.zip'.format(dset['filename'])
         zip_file = download_dataset(dset['name'], dset['link'], save_dir)
@@ -95,8 +102,13 @@ if __name__ == '__main__':
         #     'filename': 'image_grid_data.pickle',
         #     'link' : '',
         # },
-        'cifar100' : {
-            'name': 'cifar100',
+        # 'cifar100' : {
+        #     'name': 'cifar100',
+        # },
+        'market_cl': {
+            'name': 'market_cl',
+            'filename': 'data_mean_na.pkl.zip',
+            'link' : 'https://drive.google.com/uc?id=1zGWO6jTlA3Gv0jWIfkO88bapLrnzJkCl&export=download'
         }
     }
 
