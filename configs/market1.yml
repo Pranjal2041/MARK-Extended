@@ -1,0 +1,22 @@
+EXP_NAME: "MarketExperiment4"
+EXP_DESC: "First Market Experiment"
+
+DATASET:
+  NAME: MarketLSTM
+  NUM_CLASSES: 4
+  NUM_TASKS: 308
+
+TRAINING:
+  LR: 
+    FE: 1e-3
+    INIT_KB: 1e-3
+    MG_N_C: 1e-3
+    FINETUNE_MG_N_C: 5e-3
+
+  EPOCHS:
+    FE: 30
+    INIT_KB: 30
+    MG_N_C: 30
+    FINETUNE_MG_N_C: 25
+  
+  BATCH_SIZE: 4

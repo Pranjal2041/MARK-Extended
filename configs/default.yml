@@ -1,16 +1,19 @@
 EXP_NAME: "Default Experiment"
 EXP_DESC: "Default Experiment Description"
 
-MODE: MARK
+MODE: MARK # Or MARKLSTM
 MODEL:
   FE_HIDDEN: 32
   EMBED_DIM: 128
   DIMENSIONS: [64, 128, 256]
+  INPUT_FEAT_SIZE: 28
 
 DATASET:
-  NAME: Cifar100
+  NAME: Cifar100 # Or MarketLSTM
   NUM_CLASSES: 5
   NUM_TASKS: 20
+
+
 
 TRAINING:
   LR: 

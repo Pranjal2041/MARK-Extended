@@ -20,10 +20,12 @@ dictitems:
       - 256
       EMBED_DIM: 128
       FE_HIDDEN: 32
+      INPUT_FEAT_SIZE: 28
     state:
       DIMENSIONS: *id001
       EMBED_DIM: 128
       FE_HIDDEN: 32
+      INPUT_FEAT_SIZE: 28
   TRAINING: &id006 !!python/object/new:easydict.EasyDict
     dictitems:
       BATCH_SIZE: 128
