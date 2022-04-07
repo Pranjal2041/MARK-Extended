@@ -27,13 +27,13 @@ def train_fe(model : MARKLSTMModel, dl, criterions, task_id, lr = 1e-1, num_epoc
     return train_loop(model_fn, dl, optimizer, criterions, task_id, num_epochs = num_epochs, device = device)
 
 
-def update_kb(model, train_dl, val_dl, criterions, task_id, lr = 2e-1, device=torch.device('cuda')):
+def update_kb(model, train_dl, val_dl, criterions, task_id, lr = 2e-3, device=torch.device('cuda')):
     train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=device)
 
 
 def train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=torch.device('cuda')):
-    e_outer = 15
-    e_inner = 40
+    e_outer = 5
+    e_inner = 5
     k = 2
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
@@ -185,7 +185,9 @@ def test_loop(model : Union[MARKLSTMModel, Callable[[torch.tensor, int], torch.t
     acc_meters = {i:AverageMeter() for i in range(4)}
     f1_meters = {i:torchmetrics.F1Score(average= 'macro', num_classes=4) for i in range(4)}
     dl.dataset.set_symbol(task_id)
+    io=0
     for _, (inp_feats, label, lengths) in enumerate(dl):
+      
         inp_feats = inp_feats.to(device)
         label = label.to(device)
 

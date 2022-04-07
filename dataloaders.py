@@ -68,6 +68,10 @@ class MarketDataset(Dataset):
         to_normalize = ['Open', 'High', 'Low', 'Close',
             'Open_prev', 'High_prev', 'Low_prev', 'Close_prev', 'SMA_10', 'SMA_20', 'SMA_50', 'SMA_200',
             'RSI_14', 'BBL_5_2.0', 'BBM_5_2.0', 'BBU_5_2.0',]
+
+       
+  
+       
         df[to_normalize]/=df.iloc[0]['Close'] # Note that repeated application doesnt change anything
         ifeats = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends',
             'Open_prev', 'High_prev', 'Low_prev', 'Close_prev', 'Volume_prev',
@@ -81,13 +85,18 @@ class MarketDataset(Dataset):
         labels = df[lfeats]
 
         gap = len(df)/self.length
-        new_idx = np.random.randint(int(idx*gap), min(len(df), int((idx+1)*gap)))
+        low = int(idx*gap)
+        high = min(len(df), int((idx+1)*gap))
+        if low>=high:
+            new_idx = min(low, high)
+        else:
+            new_idx = np.random.randint(low, high)
 
         padding = torch.zeros(375 - new_idx - 1, inp_feats.values.shape[1])
 
         return torch.vstack((torch.from_numpy(inp_feats[:new_idx+1].values),padding)), torch.from_numpy(labels.values[new_idx]), new_idx+1
 
-def get_marketcl_dataloader(fol = 'datasets', batch_size=8, num_workers=4, shuffle = True):
+def get_marketcl_dataloader(fol = 'datasets', batch_size=5, num_workers=0, shuffle = True):
     dataset = MarketDataset(os.path.join(fol, 'data_mean_na.pkl' ))
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     return dataloader
