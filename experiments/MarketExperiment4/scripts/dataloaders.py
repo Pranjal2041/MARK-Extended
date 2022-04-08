@@ -68,7 +68,11 @@ class MarketDataset(Dataset):
         to_normalize = ['Open', 'High', 'Low', 'Close',
             'Open_prev', 'High_prev', 'Low_prev', 'Close_prev', 'SMA_10', 'SMA_20', 'SMA_50', 'SMA_200',
             'RSI_14', 'BBL_5_2.0', 'BBM_5_2.0', 'BBU_5_2.0',]
-        df[to_normalize]/=df.iloc[0]['Close'] # Note that repeated application doesnt change anything
+        try:
+            df[to_normalize]/=df.iloc[0]['Close'] # Note that repeated application doesnt change anything
+        except Exception as e:
+            print('Error in Normalization:',e,idx, self.day, self.symbol)
+
         ifeats = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends',
             'Open_prev', 'High_prev', 'Low_prev', 'Close_prev', 'Volume_prev',
             'Dividends_prev', 'hurst', 'SMA_10', 'SMA_20', 'SMA_50', 'SMA_200',
@@ -81,7 +85,12 @@ class MarketDataset(Dataset):
         labels = df[lfeats]
 
         gap = len(df)/self.length
-        new_idx = np.random.randint(int(idx*gap), min(len(df), int((idx+1)*gap)))
+        low = int(idx*gap)
+        high = min(len(df), int((idx+1)*gap))
+        if low>=high:
+            new_idx = min(low, high)
+        else:
+            new_idx = np.random.randint(low, high)
 
         padding = torch.zeros(375 - new_idx - 1, inp_feats.values.shape[1])
 

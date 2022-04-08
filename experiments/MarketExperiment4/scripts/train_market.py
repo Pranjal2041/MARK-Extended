@@ -26,7 +26,7 @@ def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device):
     days_accs = np.zeros((4, NUM_DAYS-1))
     days_bwt = np.zeros((4, NUM_DAYS - 1))
 
-    all_freqs = pickle.load(open('datasets/market_cl_freqs.pkl','rb')) 
+    all_freqs = pickle.load(open('market_cl_freqs.pkl','rb')) 
 
     for day in range(NUM_DAYS-1): # Last Day only for testing?
         task_accs = np.zeros((4, NUM_SYMBOLS, NUM_SYMBOLS)) 

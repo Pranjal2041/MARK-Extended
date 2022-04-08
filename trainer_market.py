@@ -75,7 +75,7 @@ def train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=tor
             grads[i] = {k:v * acc for k,v in grads[i].items()}
         if accs_sum == 0:
             print('OH NOOOO')
-        for i in range(k):
+        for i in range(len(grads)):
             grads[i] = {dict_k:v / (accs_sum * k) for dict_k,v in grads[i].items()}
         
         final_grads = dict()
