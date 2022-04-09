@@ -27,14 +27,14 @@ def train_fe(model : MARKLSTMModel, dl, criterions, task_id, lr = 1e-1, num_epoc
     return train_loop(model_fn, dl, optimizer, criterions, task_id, num_epochs = num_epochs, device = device)
 
 
-def update_kb(model, train_dl, val_dl, criterions, task_id, lr = 2e-1, device=torch.device('cuda')):
+def update_kb(model, train_dl, val_dl, criterions, task_id, lr = 2e-3, device=torch.device('cuda')):
     train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=device)
 
 
 def train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=torch.device('cuda')):
-    e_outer = 15
-    e_inner = 40
-    k = 2
+    e_outer = 4
+    e_inner = 5
+    k = e_outer
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
     kb_k = {}
@@ -107,7 +107,10 @@ def train_batch(model, img, label, lengths, optimizer, criterions, task_id, num_
         if optimizer is not None:
             loss.backward()
             for i in range(len(optimizer.param_groups)):
-                torch.nn.utils.clip_grad_norm_(optimizer.param_groups[i]['params'], 1)
+                try:
+                    torch.nn.utils.clip_grad_norm_(optimizer.param_groups[i]['params'], 1, error_if_nonfinite=True)
+                except Exception as e:
+                    print('Infinite Grads Observed, Continuing',e)
             optimizer.step()
         loss_meter.update(loss.item(), img.shape[0])
         accs = lstm_accuracy(logits,label)
@@ -138,8 +141,10 @@ def train_loop(model : Union[MARKLSTMModel,Callable[[torch.tensor, int], torch.t
                 print("Prob is here")
             loss.backward()
             for i in range(len(optimizer.param_groups)):
-                torch.nn.utils.clip_grad_norm_(optimizer.param_groups[i]['params'], 10)
-
+                try:
+                    torch.nn.utils.clip_grad_norm_(optimizer.param_groups[i]['params'], 10, error_if_nonfinite= True)
+                except Exception as e:
+                    print('Infinite Grads Observed, Continuing',e)
             optimizer.step()
 
             loss_meter.update(loss.item(), inp_feats.shape[0])
@@ -185,7 +190,9 @@ def test_loop(model : Union[MARKLSTMModel, Callable[[torch.tensor, int], torch.t
     acc_meters = {i:AverageMeter() for i in range(4)}
     f1_meters = {i:torchmetrics.F1Score(average= 'macro', num_classes=4) for i in range(4)}
     dl.dataset.set_symbol(task_id)
+    io=0
     for _, (inp_feats, label, lengths) in enumerate(dl):
+      
         inp_feats = inp_feats.to(device)
         label = label.to(device)
 

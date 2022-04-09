@@ -133,3 +133,5 @@ datasets
 *.pth
 cifar100
 .idea
+MARK_MODELS
+nohup.out

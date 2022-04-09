@@ -96,7 +96,7 @@ class MarketDataset(Dataset):
 
         return torch.vstack((torch.from_numpy(inp_feats[:new_idx+1].values),padding)), torch.from_numpy(labels.values[new_idx]), new_idx+1
 
-def get_marketcl_dataloader(fol = 'datasets', batch_size=8, num_workers=4, shuffle = True):
+def get_marketcl_dataloader(fol = 'datasets', batch_size=5, num_workers=0, shuffle = True):
     dataset = MarketDataset(os.path.join(fol, 'data_mean_na.pkl' ))
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     return dataloader

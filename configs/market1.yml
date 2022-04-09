@@ -1,5 +1,8 @@
-EXP_NAME: "MarketExperiment4"
-EXP_DESC: "First Market Experiment"
+EXP_NAME: "MarketExperimentLargerFE"
+EXP_DESC: "Market Experiment with larger FE"
+
+MODEL:
+  FE_HIDDEN: 64
 
 DATASET:
   NAME: MarketLSTM
