@@ -1,0 +1,5 @@
+EXP_NAME: "MarkSupSupModel"
+EXP_DESC: "Mark + SupSup on Cifar-100"
+
+MODEL:
+  SUPSUP: true

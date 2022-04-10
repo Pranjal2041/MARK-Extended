@@ -1,0 +1,7 @@
+EXP_NAME: "ImageDataExp"
+EXP_DESC: "Image Data Experiment"
+
+DATASET:
+  NAME: ImageData # Or MarketLSTM
+  NUM_CLASSES: 5
+  NUM_TASKS: 15

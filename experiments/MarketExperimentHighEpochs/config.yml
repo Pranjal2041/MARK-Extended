@@ -1,0 +1,64 @@
+!!python/object/new:easydict.EasyDict
+dictitems:
+  DATASET: &id004 !!python/object/new:easydict.EasyDict
+    dictitems:
+      NAME: MarketLSTM
+      NUM_CLASSES: 4
+      NUM_TASKS: 308
+    state:
+      NAME: MarketLSTM
+      NUM_CLASSES: 4
+      NUM_TASKS: 308
+  EXP_DESC: Market Experiment with larger FE and higher epochs
+  EXP_NAME: MarketExperimentHighEpochs
+  MODE: MARK
+  MODEL: &id005 !!python/object/new:easydict.EasyDict
+    dictitems:
+      DIMENSIONS: &id001
+      - 64
+      - 128
+      - 256
+      EMBED_DIM: 128
+      FE_HIDDEN: 64
+      INPUT_FEAT_SIZE: 28
+    state:
+      DIMENSIONS: *id001
+      EMBED_DIM: 128
+      FE_HIDDEN: 64
+      INPUT_FEAT_SIZE: 28
+  TRAINING: &id006 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BATCH_SIZE: 4
+      EPOCHS: &id002 !!python/object/new:easydict.EasyDict
+        dictitems:
+          FE: 50
+          FINETUNE_MG_N_C: 40
+          INIT_KB: 50
+          MG_N_C: 50
+        state:
+          FE: 50
+          FINETUNE_MG_N_C: 40
+          INIT_KB: 50
+          MG_N_C: 50
+      LR: &id003 !!python/object/new:easydict.EasyDict
+        dictitems:
+          FE: 1e-3
+          FINETUNE_MG_N_C: 5e-3
+          INIT_KB: 1e-3
+          MG_N_C: 1e-3
+        state:
+          FE: 1e-3
+          FINETUNE_MG_N_C: 5e-3
+          INIT_KB: 1e-3
+          MG_N_C: 1e-3
+    state:
+      BATCH_SIZE: 4
+      EPOCHS: *id002
+      LR: *id003
+state:
+  DATASET: *id004
+  EXP_DESC: Market Experiment with larger FE and higher epochs
+  EXP_NAME: MarketExperimentHighEpochs
+  MODE: MARK
+  MODEL: *id005
+  TRAINING: *id006
