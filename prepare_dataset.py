@@ -158,14 +158,14 @@ if __name__ == '__main__':
         #     'filename': 'image_grid_data.pickle',
         #     'link' : '',
         # },
-        # 'cifar100' : {
-        #     'name': 'cifar100',
-        # },
-        # 'market_cl': {
-        #     'name': 'market_cl',
-        #     'filename': 'data_mean_na.pkl.zip',
-        #     'link' : 'https://drive.google.com/uc?id=1zGWO6jTlA3Gv0jWIfkO88bapLrnzJkCl&export=download'
-        # }
+        'cifar100' : {
+            'name': 'cifar100',
+        },
+        'market_cl': {
+            'name': 'market_cl',
+            'filename': 'data_mean_na.pkl.zip',
+            'link' : 'https://drive.google.com/uc?id=1zGWO6jTlA3Gv0jWIfkO88bapLrnzJkCl&export=download'
+        }
     }
 
     for dset in datasets:

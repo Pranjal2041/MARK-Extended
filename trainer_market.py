@@ -20,6 +20,10 @@ def train_kb_nonmeta(model : MARKLSTMModel, dl, criterions, task_id, lr = 1e-1, 
     optimizer = get_optimizer(model, 1, lr = lr, weight_decay = 1e-2, task_id = task_id)
     return train_loop(model, dl, optimizer, criterions, task_id, num_epochs, device)
 
+def train_kb_nonmeta_baseline(model : MARKLSTMModel, dl, criterions, task_id, lr = 1e-1, num_epochs = 50, device = torch.device('cuda')):
+    optimizer = get_optimizer(model, 4, lr = lr, weight_decay = 1e-2, task_id = task_id)
+    return train_loop(model, dl, optimizer, criterions, task_id, num_epochs, device)
+
 
 def train_fe(model : MARKLSTMModel, dl, criterions, task_id, lr = 1e-1, num_epochs=50, device = torch.device('cuda')):
     optimizer = get_optimizer(model, 0, lr = lr, weight_decay = 1e-2, task_id = task_id )
@@ -27,20 +31,20 @@ def train_fe(model : MARKLSTMModel, dl, criterions, task_id, lr = 1e-1, num_epoc
     return train_loop(model_fn, dl, optimizer, criterions, task_id, num_epochs = num_epochs, device = device)
 
 
-def update_kb(model, train_dl, val_dl, criterions, task_id, lr = 2e-3, device=torch.device('cuda')):
+def update_kb(model, train_dl, val_dl, criterions, task_id, lr = 2e-1, device=torch.device('cuda')):
     train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=device)
 
 
 def train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=torch.device('cuda')):
-    e_outer = 4
-    e_inner = 5
-    k = e_outer
+    e_outer = 10
+    e_inner = 30
+    k = 3
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
-    kb_k = {}
+    #kb_k = {}
     grads = dict()
     accs_sum = 0.
-    optimizer_kb = optim.Adam(list(model.kb.parameters()), lr=lr, weight_decay=1e-2)
+    optimizer_kb = optim.Adam(list(model.kb[0].parameters()), lr=lr, weight_decay=1e-2)
 
     epoch_bar = tqdm(range(e_outer), total=e_outer)
     for epoch in epoch_bar:
@@ -54,13 +58,13 @@ def train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=tor
             img = img.to(device)
             label = label.to(device)
             model_cp = copy.deepcopy(model)
-            optimizer_kb_temp = optim.SGD(list(model_cp.kb.parameters())+list(model_cp.kbcs[task_id].parameters()), lr=lr * 1., weight_decay=1e-3, momentum = 0)
+            optimizer_kb_temp = optim.SGD(list(model_cp.kb[0].parameters())+list(model_cp.kbcs[task_id].parameters()), lr=lr * 1., weight_decay=1e-3, momentum = 0)
 
             _, _ = train_batch(model_cp, img, label, lengths, optimizer_kb_temp, criterions, task_id, e_inner, device)
             
-            grads[i] = get_grads(model.kb, model_cp.kb)
+            grads[i] = get_grads(model.kb[0], model_cp.kb[0])
             
-            kb_k[i] = copy.deepcopy(model_cp.kb)
+            #kb_k[i] = copy.deepcopy(model_cp.kb)
             with torch.no_grad():
                 model_cp.eval()
                 # Note: Original code doesnt use this
@@ -81,7 +85,7 @@ def train_update_kb(model, train_dl, val_dl, criterions, task_id, lr, device=tor
         final_grads = dict()
         final_grads = {n:sum([grads[i][n] for i in range(k)])  for n in grads[0]}
         optimizer_kb.zero_grad()
-        for name,param in model.kb.named_parameters():
+        for name,param in model.kb[0].named_parameters():
             if final_grads[name].max() > 100:
                 print('Loss going to infinite')
             param.grad = final_grads[name].to(device)
@@ -224,13 +228,17 @@ def get_optimizer(model : MARKLSTMModel, STAGE : int, lr : float = 1e-1, weight_
         fec = model.fecs[task_id]
         optimizer = optim.Adam(list(fe.parameters()) + list(fec.parameters()), lr = lr)
     elif STAGE == 1:
-        kb = model.kb
+        kb = model.kb[0]
         kbc = model.kbcs[task_id]
         optimizer = optim.Adam(list(kb.parameters()) + list(kbc.parameters()), lr = lr, weight_decay = weight_decay)
     elif STAGE == 2:
         mg = model.mgs[task_id]
         kbc = model.kbcs[task_id]
         optimizer = optim.Adam(list(mg.parameters()) + list(kbc.parameters()), lr = lr, weight_decay=weight_decay)
+    elif STAGE == 4:
+        kb = model.kb[task_id]
+        kbc = model.kbcs[task_id]
+        optimizer = optim.Adam(list(kb.parameters()) + list(kbc.parameters()), lr=lr, weight_decay=weight_decay)
     elif STAGE == 3: # Not Required - need to get different optimizer for KB and classifier
         #kb = model.kb
         #kbc = model.kbcs[task_id]

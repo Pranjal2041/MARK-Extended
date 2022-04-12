@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 from models_marketcl import MARKLSTMModel
 from trainer_market import test_loop
-from trainer_market import train_fe, train_kb_nonmeta, train_mg_n_clf, update_kb
+from trainer_market import train_fe, train_kb_nonmeta, train_mg_n_clf, update_kb, train_kb_nonmeta_baseline
 from dataloaders import get_marketcl_dataloader
 from advanced_logger import LogPriority
 import pickle
@@ -12,7 +12,7 @@ import sys
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device):
+def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device, baseline, iter):
 
 
     print = experimenter.logger.log
@@ -71,7 +71,19 @@ def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device):
             print('\n---------------------------------------------------------\n')
 
             # Step 2: Now if task is 0, train the KB without Meta-Learning
-            if task_id == 0:
+
+            if baseline ==4:
+                start_time = time.time()
+                print(f'Training Initial Knowledge Base Weights')
+                loss, acc = train_kb_nonmeta_baseline(model, train_dl, criterions, task_id,
+                                             lr=float(experimenter.config.TRAINING.LR.INIT_KB), device=device,
+                                             num_epochs=experimenter.config.TRAINING.EPOCHS.INIT_KB)
+                print(f'Initial KB Validation Loss {loss} & Accuracy: {acc}')
+                print("--- %s seconds ---" % (time.time() - start_time))
+
+                print('\n---------------------------------------------------------\n')
+
+            if (task_id == 0 and day==0 and baseline!=4) or baseline==1 or baseline==3:
                 start_time = time.time()
                 print(f'Training Initial Knowledge Base Weights')
                 loss, acc = train_kb_nonmeta(model, train_dl, criterions, task_id, lr = float(experimenter.config.TRAINING.LR.INIT_KB), device = device, num_epochs = experimenter.config.TRAINING.EPOCHS.INIT_KB)
@@ -79,37 +91,39 @@ def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device):
                 print("--- %s seconds ---" % (time.time() - start_time))
 
                 print('\n---------------------------------------------------------\n')
+            if baseline == 0 or baseline == 3:
+                # Step 3: Now train MaskGenerator and Classifier
+                start_time = time.time()
+                print(f'Training Mask Generator and Classifier')
+                loss, acc = train_mg_n_clf(model, train_dl, criterions, task_id, lr = float(experimenter.config.TRAINING.LR.MG_N_C), device = device, num_epochs = experimenter.config.TRAINING.EPOCHS.MG_N_C)
+                print(f'Mask Generation and Classifier Training Loss {loss} & Accuracy: {acc}')
+                print("--- %s seconds ---" % (time.time() - start_time))
 
-            # Step 3: Now train MaskGenerator and Classifier
-            start_time = time.time()
-            print(f'Training Mask Generator and Classifier')
-            loss, acc = train_mg_n_clf(model, train_dl, criterions, task_id, lr = float(experimenter.config.TRAINING.LR.MG_N_C), device = device, num_epochs = experimenter.config.TRAINING.EPOCHS.MG_N_C)
-            print(f'Mask Generation and Classifier Training Loss {loss} & Accuracy: {acc}')
-            print("--- %s seconds ---" % (time.time() - start_time))
+                print('\n---------------------------------------------------------\n')
 
-            print('\n---------------------------------------------------------\n')
-            
-            # '''
-            print('Updating KB')
-            print('Before',sum([x.sum() for x in model.kb.parameters()]))
-            start_time = time.time()
-            update_kb(model, train_dl, train_dl, criterions, task_id, device=device)
-            print(f'Update KB {loss} & Accuracy: {acc}')
-            print('After',sum([x.sum() for x in model.kb.parameters()]))
-            print("--- %s seconds ---" % (time.time() - start_time))
+            if baseline == 0 or baseline == 2:
+                # '''
+                print('Updating KB')
+                print('Before',sum([x.sum() for x in model.kb[0].parameters()]))
+                start_time = time.time()
+                update_kb(model, train_dl, train_dl, criterions, task_id, device=device)
+                print(f'Update KB {loss} & Accuracy: {acc}')
+                print('After',sum([x.sum() for x in model.kb[0].parameters()]))
+                print("--- %s seconds ---" % (time.time() - start_time))
 
-            print('\n---------------------------------------------------------\n')
-            # '''
+                print('\n---------------------------------------------------------\n')
+                # '''
 
-            # Stage 5: Fine-Tune Mask Generator and Final Classifier
-            print(f'Fine-Tune Mask Generator and Classifier')
-            start_time = time.time()
-            train_mg_n_clf(model, train_dl, criterions, task_id, lr = float(experimenter.config.TRAINING.LR.FINETUNE_MG_N_C), num_epochs = experimenter.config.TRAINING.EPOCHS.FINETUNE_MG_N_C, device = device)
-            print(f'Fine-Tuning Mask Generation and Classifier Training Loss {loss} & Accuracy: {acc}')
-            print("--- %s seconds ---" % (time.time() - start_time))
+            if baseline == 0 or baseline == 3:
+                # Stage 5: Fine-Tune Mask Generator and Final Classifier
+                print(f'Fine-Tune Mask Generator and Classifier')
+                start_time = time.time()
+                train_mg_n_clf(model, train_dl, criterions, task_id, lr = float(experimenter.config.TRAINING.LR.FINETUNE_MG_N_C), num_epochs = experimenter.config.TRAINING.EPOCHS.FINETUNE_MG_N_C, device = device)
+                print(f'Fine-Tuning Mask Generation and Classifier Training Loss {loss} & Accuracy: {acc}')
+                print("--- %s seconds ---" % (time.time() - start_time))
 
 
-            print('\n---------------------------------------------------------\n')
+                print('\n---------------------------------------------------------\n')
 
             model.cache_masks()
 
@@ -159,14 +173,15 @@ def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device):
             task_num=task_num+1
         print("--- %s seconds ---" % (time.time() - start_time))
         # pathS=f"/dccstor/preragar/MARK_MODELS/S/0.002/model_{day}.pt"
-        # base_path = '/dccstor/preragar'
-        base_path = './'
-        pathS = os.path.join(base_path,f'MARK_MODELS/S/0.002/model_{day}.pt')
-        os.makedirs(os.path.split(pathS)[0], exist_ok=True)
+        base_path = '/dccstor/preragar'
+        #base_path = './'
+        pathS = os.path.join(base_path,f'MARK_MODELS/MARKET/{baseline}_{iter}_model_{day}.pt')
+        #os.makedirs(os.path.split(pathS)[0], exist_ok=True)
         torch.save(model, pathS)
 
         for i in range(4):
             print(f'Label {i}', priority = LogPriority.STATS)
+            print(task_accs[i])
             ta = task_accs[i]
             avg_acc = ta[-1].mean()
             bwt = sum(ta[-1]-np.diag(ta))/ (ta.shape[1]-1)
@@ -178,7 +193,7 @@ def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device):
     return days_accs.mean(axis=1), days_bwt.mean(axis=1)
 
 
-def main(cfg, experimenter):
+def main(cfg, experimenter, baseline):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -191,13 +206,14 @@ def main(cfg, experimenter):
     bwts = []
     for iter in range(NUM_ITERS):
         print(f'Run {iter}', priority = LogPriority.STATS)
-        model = MARKLSTMModel(cfg, device)
+        model = MARKLSTMModel(cfg, device, baseline)
         criterion = nn.CrossEntropyLoss().to(device)
         # Different optimizers will be created as and when needed.
     
         train_dl = get_marketcl_dataloader(batch_size = cfg.TRAINING.BATCH_SIZE) # Train dl
 
-        acc, bwt = train(model, criterion, train_dl, experimenter, device)
+
+        acc, bwt = train(model, criterion, train_dl, experimenter, device, baseline, iter)
         accs.append(acc)
         bwts.append(bwt)
     
@@ -213,7 +229,8 @@ def main(cfg, experimenter):
 
 if __name__ == '__main__':
     from experimenter import Experimenter
-    cfg_file = sys.argv[1]#'configs/market1.yml'
+    cfg_file = 'configs/market1.yml'
     experimenter = Experimenter(cfg_file)
-    main(experimenter.config, experimenter)
+    baseline =0
+    main(experimenter.config, experimenter, baseline)
     # experimenter.run_experiment()

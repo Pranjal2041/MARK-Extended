@@ -157,7 +157,7 @@ class MaskedModelsList(list):
 # TODO: Use Config Instead of PARAMS
 class MARKModel(nn.Module):
 
-    def __init__(self, cfg: AdvancedConfig, device : torch.device, image_size = 32,):
+    def __init__(self, cfg: AdvancedConfig, device : torch.device, image_size = 32, baseline=0):
 
         self.FE_HIDDEN = cfg.MODEL.FE_HIDDEN
         self.EMBED_DIM = cfg.MODEL.EMBED_DIM
@@ -165,6 +165,7 @@ class MARKModel(nn.Module):
         self.NUM_CLASSES = cfg.DATASET.NUM_CLASSES
         self.NUM_TASKS = cfg.DATASET.NUM_TASKS
         self.supsup = cfg.MODEL.SUPSUP
+        self.baseline=baseline #0 means full approach
         super().__init__()
 
 
@@ -194,7 +195,10 @@ class MARKModel(nn.Module):
     def forward(self, X : torch.tensor, task_id : int) -> torch.tensor:
         # Full model
         X_ = self.fes[task_id](X)
-        masks = self.mgs[task_id](X_)
-        X_ = self.kb(X, masks)
+        if self.baseline ==0  or self.baseline==3:
+            masks = self.mgs[task_id](X_)
+            X_ = self.kb(X, masks)
+        else:
+            X_=self.kb(X)
         logits = self.kbcs[task_id](X_)
         return logits

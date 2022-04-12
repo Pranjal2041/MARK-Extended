@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 class Experimenter:
 
-    def __init__(self, cfg_file, BASE_DIR = 'experiments'):
+    def __init__(self, cfg_file, BASE_DIR = 'experiments', baseline=0):
         self.cfg_file = cfg_file        
         self.curr_epoch = 0
         self.curr_mode = 'MARK'
@@ -35,6 +35,7 @@ class Experimenter:
         self.logger.log('Config File:',self.cfg_file, priority = LogPriority.STATS)
         self.logger.log('Experiment started', priority = LogPriority.LOW)
         self.losses = dict()
+        self.baseline=baseline
 
         self.writer = SummaryWriter(join(self.exp_dir,'tensor_logs'))
 
@@ -95,14 +96,15 @@ class Experimenter:
         self.curr_epoch = -1
         self.best_loss = 999999
         if mode == 'MARK':
-            TRAIN_MARK(self.config, self)
+            TRAIN_MARK(self.config, self, self.baseline)
 
         self.logger.log(f'Best Loss: {self.best_loss}', priority= LogPriority.STATS)
         self.logger.log('Experiment Training and Generation Ended', priority = LogPriority.MEDIUM)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg_file', type=str, default='configs/cifar_supsup.yml')
+    # parser.add_argument('--cfg_file', type=str, default='configs/cifar_supsup.yml')
+    parser.add_argument('--cfg_file', type=str, default='configs/cifar100.yml')
     args = parser.parse_args()
-    exp = Experimenter(args.cfg_file)
+    exp = Experimenter(args.cfg_file, baseline=0)
     exp.run_experiment()

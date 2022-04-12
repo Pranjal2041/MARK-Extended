@@ -136,7 +136,7 @@ class MaskedModelsList(list):
 
 class MARKLSTMModel(nn.Module):
 
-    def __init__(self, cfg: AdvancedConfig, device : torch.device):
+    def __init__(self, cfg: AdvancedConfig, device : torch.device, baseline=0):
 
         super().__init__()
 
@@ -146,12 +146,13 @@ class MARKLSTMModel(nn.Module):
         self.NUM_CLASSES = cfg.DATASET.NUM_CLASSES
         self.NUM_TASKS = cfg.DATASET.NUM_TASKS
         self.supsup = cfg.MODEL.SUPSUP
+        self.baseline = baseline
         print(self.supsup, type(self.supsup))
 
 
         self.fes = list_to_device([FeatExtractorLSTM(self.INPUT_FEAT_SIZE, self.FE_HIDDEN) for _ in range(self.NUM_TASKS)], device)
         self.fecs = list_to_device([FeatureExtractorLSTMClassifier(self.FE_HIDDEN, self.NUM_CLASSES) for _ in range(self.NUM_TASKS)], device)
-        self.kb = LSTMKB(28, self.DIMENSIONS).to(device)
+        # self.kb = LSTMKB(28, self.DIMENSIONS).to(device)
         
         if self.supsup:
             # Create 
@@ -159,10 +160,12 @@ class MARKLSTMModel(nn.Module):
             self.mgs = MaskedModelsList(list_to_device([mg for _ in range(self.NUM_TASKS)], device))
             kbc = KBLSTMClassifier(self.DIMENSIONS[-1], 4, supsup = True, num_tasks = self.NUM_TASKS)
             self.kbcs = MaskedModelsList(list_to_device([kbc for _ in range(self.NUM_TASKS)], device))
+            self.kb = list_to_device([LSTMKB(28, self.DIMENSIONS) for _ in range(self.NUM_TASKS)], device)
         
         else:
             self.mgs = list_to_device([MaskGenerator(self.FE_HIDDEN, self.DIMENSIONS) for _ in range(self.NUM_TASKS)], device)
             self.kbcs = list_to_device([KBLSTMClassifier(self.DIMENSIONS[-1], 4) for _ in range(self.NUM_TASKS)], device)
+            self.kb = list_to_device([LSTMKB(28, self.DIMENSIONS) for _ in range(self.NUM_TASKS)],device)
 
     def cache_masks(self):
         if not self.supsup:
@@ -177,7 +180,13 @@ class MARKLSTMModel(nn.Module):
     def forward(self, X : torch.tensor, lengths : torch.tensor, task_id : int) -> torch.tensor:
         # Full model
         X_ = self.fes[task_id](X, lengths)
-        masks = self.mgs[task_id](X_)
-        X_ = self.kb(X, lengths, masks)
+        if self.baseline==4:
+            # masks = self.mgs[task_id](X_)
+            X_ = self.kb[task_id](X, lengths)
+        elif self.baseline == 0 or self.baseline == 3:
+            masks = self.mgs[task_id](X_)
+            X_ = self.kb[0](X, lengths, masks)
+        else:
+            X_ = self.kb[0](X, lengths)
         logits = self.kbcs[task_id](X_)
         return logits
