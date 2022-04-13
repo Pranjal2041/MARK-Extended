@@ -19,7 +19,7 @@ def train_mg_n_clf(model : MARKModel, dl, criterion, task_id, lr = 1e-2, num_epo
 def train_kb_nonmeta(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epochs = 50, device = torch.device('cuda')):
     optimizer = get_optimizer(model, 1, lr = lr, weight_decay = 1e-2, task_id = task_id)
     train_loop(model, dl, optimizer, criterion, task_id, num_epochs, device)
-
+ 
 
 def train_fe(model : MARKModel, dl, criterion, task_id, lr = 1e-1, num_epochs=50, device = torch.device('cuda')):
     optimizer = get_optimizer(model, 0, lr = lr, weight_decay = 1e-2, task_id = task_id )
