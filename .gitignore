@@ -135,3 +135,4 @@ cifar100
 .idea
 MARK_MODELS
 nohup.out
+nohup_backup1.out

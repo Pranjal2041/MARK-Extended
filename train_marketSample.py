@@ -173,8 +173,8 @@ def train(model : MARKLSTMModel, criterion, train_dl, experimenter, device, base
             task_num=task_num+1
         print("--- %s seconds ---" % (time.time() - start_time))
         # pathS=f"/dccstor/preragar/MARK_MODELS/S/0.002/model_{day}.pt"
-        base_path = '/dccstor/preragar'
-        #base_path = './'
+        # base_path = '/dccstor/preragar'
+        base_path = './'
         pathS = os.path.join(base_path,f'MARK_MODELS/MARKET/{baseline}_{iter}_model_{day}.pt')
         #os.makedirs(os.path.split(pathS)[0], exist_ok=True)
         torch.save(model, pathS)

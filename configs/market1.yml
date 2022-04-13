@@ -1,5 +1,5 @@
-EXP_NAME: "MarketExperiment6Fixed20Days"
-EXP_DESC: "Market Experiment with larger FE"
+EXP_NAME: "MarketExperiment7"
+EXP_DESC: "Market Experiment with larger FE SupSup Disabled"
 
 MODEL:
   FE_HIDDEN: 64
