@@ -9,4 +9,10 @@ Simply run `python prepare_dataset.py` to download the datasets.
 3. Cifar100
 
 
-### Training
+### Training and Testing
+
+All steps along with installation is present in ```Demo.ipynb```. Rest all source code is also present. 
+
+### Contributors 
+
+Pranjal Aggarwal (2019CS50443), Prerna Agarwal (2021AIZ8328)
